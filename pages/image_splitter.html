@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Minecraft 画像絵画生成ツール</title>
+  <link rel="stylesheet" href="../css/common.css">
+  <link rel="stylesheet" href="../css/image_splitter/style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="header">
+      <div class="tool-tags" aria-label="ツールの分類">
+        <span class="tool-tag">Minecraft</span>
+        <span class="tool-tag">Bedrock Edition</span>
+        <span class="tool-tag">画像</span>
+      </div>
+      <h1>Minecraft 画像絵画生成ツール</h1>
+      <p>画像を分割して、ブロックとして実装します。</p>
+    </header>
+
+    <section class="section upload-section">
+      <div class="section-heading">
+        <h2>1. 画像を登録</h2>
+      </div>
+
+      <div id="dropZone" class="drop-zone" role="button" tabindex="0" aria-label="画像を登録">
+        <input id="imageInput" type="file" accept="image/*" hidden>
+        <div class="drop-zone-content">
+          <div class="drop-icon" aria-hidden="true">＋</div>
+          <strong>画像をここにドロップ</strong>
+          <span>またはクリックして画像を選択</span>
+          <small>PNG / JPEG / WebP / GIFなどのブラウザ対応画像</small>
+        </div>
+      </div>
+
+      <p id="imageStatus" class="image-status">未登録</p>
+
+      <div id="imageInfo" class="image-info hidden">
+        <div class="source-preview">
+          <img id="sourcePreview" alt="登録した画像のプレビュー">
+        </div>
+        <div class="image-details">
+          <strong id="fileName"></strong>
+          <span id="imageSize"></span>
+          <button id="removeImageButton" class="button secondary" type="button">画像を削除</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section settings-section">
+      <div class="section-heading">
+        <h2>2. 分割設定</h2>
+      </div>
+
+      <div class="settings-grid">
+        <label class="field">
+          <span>ブロックID</span>
+          <input id="blockIdInput" type="text" value="image:picture" spellcheck="false" autocomplete="off">
+          <small>例：<code>image:picture</code> → <code>image:picture_01</code></small>
+        </label>
+
+        <label class="field">
+          <span>ブロック名</span>
+          <input id="blockNameInput" type="text" value="Image Picture" spellcheck="false" autocomplete="off">
+          <small>ja_JP.langに表示名として使用します。</small>
+        </label>
+
+        <label class="field small-field">
+          <span>横の分割数</span>
+          <input id="columnsInput" type="number" min="1" max="32" value="2" inputmode="numeric">
+        </label>
+
+        <label class="field small-field">
+          <span>縦の分割数</span>
+          <input id="rowsInput" type="number" min="1" max="32" value="2" inputmode="numeric">
+        </label>
+      </div>
+
+      <div id="ratioWarning" class="notice hidden"></div>
+      <div id="validationMessage" class="validation hidden"></div>
+    </section>
+
+    <section class="section preview-section">
+      <div class="section-heading">
+        <h2>3. プレビュー</h2>
+      </div>
+
+      <div class="preview-wrap">
+        <div id="emptyPreview" class="empty-preview">画像を登録してください。</div>
+        <div id="previewCanvasWrap" class="preview-canvas-wrap hidden">
+          <canvas id="previewCanvas"></canvas>
+        </div>
+      </div>
+
+      <div id="tileList" class="tile-list"></div>
+    </section>
+
+    <section class="section output-section">
+      <div class="section-heading">
+        <h2>4. ファイルを出力</h2>
+      </div>
+
+      <p class="output-description">既存アドオンに追加するためのBP / RPファイルだけを生成します。</p>
+
+      <div class="output-count">
+        <span>ブロック数:</span>
+        <strong id="blockCount">0</strong>
+      </div>
+
+      <button id="downloadButton" class="button primary download-button" type="button" disabled>
+        ZIPでダウンロード
+      </button>
+      <p id="downloadMessage" class="download-message">画像を登録するとZIPを生成できます。</p>
+    </section>
+
+    <footer class="footer">
+      <p>生成処理はブラウザ内だけで行われます。画像自体をサーバーへ送信しません。</p>
+    </footer>
+  </main>
+
+  <script src="../js/common.js"></script>
+  <script src="../js/image_splitter/state.js"></script>
+  <script src="../js/image_splitter/image.js"></script>
+  <script src="../js/image_splitter/preview.js"></script>
+  <script src="../js/image_splitter/generator.js"></script>
+  <script src="../js/image_splitter/zip.js"></script>
+  <script src="../js/image_splitter/main.js"></script>
+</body>
+</html>
