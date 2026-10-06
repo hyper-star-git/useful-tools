@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Minecraft フォトパネルメーカー</title>
+  <link rel="stylesheet" href="../css/common.css">
+  <link rel="stylesheet" href="../css/photo_panel_maker/style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="header">
+      <div class="tool-tags" aria-label="ツールの分類">
+        <span class="tool-tag">Minecraft</span>
+        <span class="tool-tag">Bedrock Edition</span>
+        <span class="tool-tag">画像</span>
+      </div>
+      <h1>Minecraft フォトパネルメーカー</h1>
+      <p>画像を分割して、薄いフォトパネルとして実装します。</p>
+    </header>
+
+    <section class="section upload-section">
+      <div class="section-heading">
+        <h2>1. 画像を登録</h2>
+      </div>
+
+      <div id="dropZone" class="drop-zone" role="button" tabindex="0" aria-label="画像を登録">
+        <input id="imageInput" type="file" accept="image/*" hidden>
+        <div class="drop-zone-content">
+          <div class="drop-icon" aria-hidden="true">＋</div>
+          <strong>画像をここにドロップ</strong>
+          <span>またはクリックして画像を選択</span>
+          <small>PNG / JPEG / WebP / GIFなどのブラウザ対応画像</small>
+        </div>
+      </div>
+
+      <p id="imageStatus" class="image-status">未登録</p>
+
+      <div id="imageInfo" class="image-info hidden">
+        <div class="source-preview">
+          <img id="sourcePreview" alt="登録した画像のプレビュー">
+        </div>
+        <div class="image-details">
+          <strong id="fileName"></strong>
+          <span id="imageSize"></span>
+          <button id="removeImageButton" class="button secondary" type="button">画像を削除</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section settings-section">
+      <div class="section-heading">
+        <h2>2. 設定</h2>
+      </div>
+
+      <div class="settings-groups">
+        <div class="settings-group settings-group-namespace">
+          <div class="settings-group-heading">
+            <h3>名前空間</h3>
+          </div>
+          <div class="settings-grid settings-grid-namespace">
+            <label class="field">
+              <input id="namespaceInput" type="text" value="photo" spellcheck="false" autocomplete="off">
+              <small>例：<code>photo</code></small>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-group-heading">
+            <h3>ブロック設定</h3>
+          </div>
+          <div class="settings-grid settings-grid-block">
+            <label class="field">
+              <span>ID</span>
+              <div class="id-input">
+                <span class="id-prefix">photo_panel_</span>
+                <input id="blockIdInput" type="text" value="picture" spellcheck="false" autocomplete="off">
+              </div>
+              <small>IDは <code>photo_panel_</code> が先頭へ付きます。</small>
+            </label>
+
+            <label class="field">
+              <span>ブロック名</span>
+              <input id="blockNameInput" type="text" value="写真パネル" spellcheck="false" autocomplete="off">
+              <small><code>ja_JP.lang</code> に表示名として使用します。</small>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-group-heading">
+            <h3>Item Catalog</h3>
+          </div>
+          <div class="settings-grid settings-grid-catalog">
+            <label class="field">
+              <span>ID</span>
+              <input id="itemCatalogIdInput" type="text" value="photo_panels" spellcheck="false" autocomplete="off">
+              <small>Item CatalogのグループIDに使用します。</small>
+            </label>
+
+            <label class="field">
+              <span>Item Catalog名</span>
+              <input id="itemCatalogNameInput" type="text" value="フォトパネル" spellcheck="false" autocomplete="off">
+              <small><code>ja_JP.lang</code> にグループ名として使用します。</small>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-group-heading">
+            <h3>分割数</h3>
+          </div>
+          <div class="settings-grid settings-grid-split">
+            <label class="field small-field">
+              <span>縦</span>
+              <input id="rowsInput" type="number" min="1" max="32" value="2" inputmode="numeric">
+            </label>
+
+            <label class="field small-field">
+              <span>横</span>
+              <input id="columnsInput" type="number" min="1" max="32" value="2" inputmode="numeric">
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div id="ratioWarning" class="notice hidden"></div>
+      <div id="validationMessage" class="validation hidden"></div>
+    </section>
+
+    <section class="section preview-section">
+      <div class="section-heading">
+        <h2>3. プレビュー</h2>
+      </div>
+
+      <div class="preview-wrap">
+        <div id="emptyPreview" class="empty-preview">画像を登録してください。</div>
+        <div id="previewCanvasWrap" class="preview-canvas-wrap hidden">
+          <canvas id="previewCanvas"></canvas>
+        </div>
+      </div>
+
+      <div id="tileList" class="tile-list"></div>
+    </section>
+
+    <section class="section output-section">
+      <div class="section-heading">
+        <h2>4. ファイルを出力</h2>
+      </div>
+
+      <p class="output-description">既存アドオンに追加するためのBP / RPファイルだけを生成します。</p>
+
+      <div class="output-count">
+        <span>ブロック数:</span>
+        <strong id="blockCount">0</strong>
+      </div>
+
+      <button id="downloadButton" class="button primary download-button" type="button" disabled>
+        ZIPでダウンロード
+      </button>
+      <p id="downloadMessage" class="download-message">画像を登録するとZIPを生成できます。</p>
+    </section>
+
+    <footer class="footer">
+      <p>生成処理はブラウザ内だけで行われます。画像自体をサーバーへ送信しません。</p>
+    </footer>
+  </main>
+
+  <script src="../js/common.js"></script>
+  <script src="../js/photo_panel_maker/state.js"></script>
+  <script src="../js/photo_panel_maker/image.js"></script>
+  <script src="../js/photo_panel_maker/preview.js"></script>
+  <script src="../js/photo_panel_maker/generator.js"></script>
+  <script src="../js/photo_panel_maker/zip.js"></script>
+  <script src="../js/photo_panel_maker/main.js"></script>
+</body>
+</html>

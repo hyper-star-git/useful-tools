@@ -10,8 +10,11 @@ const elements = {
   fileName: document.getElementById("fileName"),
   imageSize: document.getElementById("imageSize"),
   removeImageButton: document.getElementById("removeImageButton"),
+  namespaceInput: document.getElementById("namespaceInput"),
   blockIdInput: document.getElementById("blockIdInput"),
   blockNameInput: document.getElementById("blockNameInput"),
+  itemCatalogIdInput: document.getElementById("itemCatalogIdInput"),
+  itemCatalogNameInput: document.getElementById("itemCatalogNameInput"),
   columnsInput: document.getElementById("columnsInput"),
   rowsInput: document.getElementById("rowsInput"),
   ratioWarning: document.getElementById("ratioWarning"),
@@ -50,8 +53,11 @@ function init() {
   document.addEventListener("drop", preventPageDefault);
 
   elements.removeImageButton.addEventListener("click", clearImage);
+  elements.namespaceInput.addEventListener("input", updateUI);
   elements.blockIdInput.addEventListener("input", updateUI);
   elements.blockNameInput.addEventListener("input", updateUI);
+  elements.itemCatalogIdInput.addEventListener("input", updateUI);
+  elements.itemCatalogNameInput.addEventListener("input", updateUI);
   elements.columnsInput.addEventListener("input", updateUI);
   elements.rowsInput.addEventListener("input", updateUI);
   elements.downloadButton.addEventListener("click", downloadFiles);
@@ -212,7 +218,11 @@ function updateUI() {
   state.tiles = preview.createTiles(state.image, settings.columns, settings.rows);
   preview.drawPreview(elements.previewCanvas, elements.previewWrap, state.image, state.tiles);
   preview.renderTileList(elements.tileList, state.image, state.tiles, (index) => {
-    return window.ImageSplitterGenerator.buildBlockIdentifier(settings.blockId, index);
+    return window.ImageSplitterGenerator.buildBlockIdentifier(
+      settings.namespace,
+      `photo_panel_${settings.blockId}`,
+      index
+    );
   });
   renderRatioWarning(settings);
 
@@ -226,8 +236,11 @@ function updateUI() {
 //入力値を読み取り、生成に使う設定へ整える。
 function getSettings() {
   return {
+    namespace: elements.namespaceInput.value.trim(),
     blockId: elements.blockIdInput.value.trim(),
     blockName: elements.blockNameInput.value.trim(),
+    itemCatalogId: elements.itemCatalogIdInput.value.trim(),
+    itemCatalogName: elements.itemCatalogNameInput.value.trim(),
     columns: window.ToolCommon.clampInteger(elements.columnsInput.value, 1, 32),
     rows: window.ToolCommon.clampInteger(elements.rowsInput.value, 1, 32)
   };
@@ -236,19 +249,31 @@ function getSettings() {
 //ファイル生成に必要な設定を検証する。
 function validateSettings(settings) {
   const errors = [];
-  const identifierPattern = /^[a-z0-9._-]+:[a-z0-9._-]+$/;
+  const identifierPattern = /^[a-z0-9._-]+$/;
   const state = window.ImageSplitterState;
 
   if (!state.image) {
     errors.push("画像を登録してください。");
   }
 
+  if (!identifierPattern.test(settings.namespace)) {
+    errors.push("名前空間は小文字の英数字・「.」「_」「-」を使用してください。");
+  }
+
   if (!identifierPattern.test(settings.blockId)) {
-    errors.push("ブロックIDは「namespace:name」の形式で、小文字の英数字・「.」「_」「-」を使用してください。");
+    errors.push("IDは小文字の英数字・「.」「_」「-」を使用してください。");
   }
 
   if (!settings.blockName) {
     errors.push("ブロック名を入力してください。");
+  }
+
+  if (!identifierPattern.test(settings.itemCatalogId)) {
+    errors.push("Item Catalog IDは小文字の英数字・「.」「_」「-」を使用してください。");
+  }
+
+  if (!settings.itemCatalogName) {
+    errors.push("Item Catalogの名前を入力してください。");
   }
 
   if (settings.columns * settings.rows > 1024) {
@@ -324,7 +349,7 @@ async function downloadFiles() {
     const anchor = document.createElement("a");
 
     anchor.href = url;
-    anchor.download = generator.buildArchiveName(settings.blockId);
+    anchor.download = generator.buildArchiveName(settings.namespace, `photo_panel_${settings.blockId}`);
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
