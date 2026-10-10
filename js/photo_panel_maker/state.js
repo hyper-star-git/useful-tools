@@ -1,6 +1,6 @@
 "use strict";
 
-//複数画像と、画像共通・画像別の設定をまとめて管理する。
+//複数画像と、画像共通・画像別の設定をまとめて管理する.
 window.PhotoPanelMakerState = {
   images: [],
   activeImageId: null,

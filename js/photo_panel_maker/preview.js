@@ -1,6 +1,6 @@
 "use strict";
 
-//画像を行・列ごとのタイル情報へ分割する。
+//画像を行・列ごとのタイル情報へ分割する.
 function createTiles(image, columns, rows) {
   const tiles = [];
 
@@ -27,7 +27,7 @@ function createTiles(image, columns, rows) {
   return tiles;
 }
 
-//分割位置と番号を重ねたプレビューを描画する。
+//分割位置と番号を重ねたプレビューを描画する.
 function drawPreview(canvas, previewWrap, image, tiles) {
   const maxWidth = Math.min(900, Math.max(240, previewWrap.clientWidth - 20));
   const scale = Math.min(1, maxWidth / image.naturalWidth);
@@ -71,7 +71,7 @@ function drawPreview(canvas, previewWrap, image, tiles) {
   }
 }
 
-//分割した各画像と対応するブロックIDを一覧表示する。
+//分割した各画像と対応するブロックIDを一覧表示する.
 function renderTileList(container, image, tiles, buildBlockIdentifier) {
   const fragment = document.createDocumentFragment();
 
@@ -94,7 +94,7 @@ function renderTileList(container, image, tiles, buildBlockIdentifier) {
   container.replaceChildren(fragment);
 }
 
-//分割した1枚をプレビュー表示用のData URLへ変換する。
+//分割した1枚をプレビュー表示用のData URLへ変換する.
 function createTileDataUrl(image, tile) {
   const canvas = document.createElement("canvas");
   canvas.width = tile.sourceWidth;
@@ -121,7 +121,7 @@ function createTileDataUrl(image, tile) {
   return canvas.toDataURL("image/png");
 }
 
-//プレビュー関数を画像分割ツールへ公開する。
+//プレビュー関数を画像分割ツールへ公開する.
 window.PhotoPanelMakerPreview = {
   createTiles,
   drawPreview,

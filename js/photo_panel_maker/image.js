@@ -1,10 +1,10 @@
 "use strict";
 
-//ブラウザへ画像を読み込み、現在の状態へ保存する。
+//ブラウザへ画像を読み込み、現在の状態へ保存する.
 function loadImageFile(file) {
   return new Promise((resolve, reject) => {
     if (!file || !file.type.startsWith("image/")) {
-      reject(new Error("画像ファイルを選択してください。"));
+      reject(new Error("画像ファイルを選択してください."));
       return;
     }
 
@@ -18,14 +18,14 @@ function loadImageFile(file) {
 
     image.onerror = () => {
       URL.revokeObjectURL(url);
-      reject(new Error("画像を読み込めませんでした。"));
+      reject(new Error("画像を読み込めませんでした."));
     };
 
     image.src = url;
   });
 }
 
-//分割した画像をPNGのBlobへ変換する。
+//分割した画像をPNGのBlobへ変換する.
 function createTileBlob(image, tile) {
   return new Promise((resolve, reject) => {
     const canvas = document.createElement("canvas");
@@ -35,7 +35,7 @@ function createTileBlob(image, tile) {
     const context = canvas.getContext("2d");
 
     if (!context) {
-      reject(new Error("Canvasを初期化できませんでした。"));
+      reject(new Error("Canvasを初期化できませんでした."));
       return;
     }
 
@@ -53,7 +53,7 @@ function createTileBlob(image, tile) {
 
     canvas.toBlob((blob) => {
       if (!blob) {
-        reject(new Error("PNGへ変換できませんでした。"));
+        reject(new Error("PNGへ変換できませんでした."));
         return;
       }
 
@@ -62,12 +62,12 @@ function createTileBlob(image, tile) {
   });
 }
 
-//ファイルの一時表示に使うURLを作成する。
+//ファイルの一時表示に使うURLを作成する.
 function createObjectUrl(file) {
   return URL.createObjectURL(file);
 }
 
-//画像処理関数を画像分割ツールへ公開する。
+//画像処理関数を画像分割ツールへ公開する.
 window.PhotoPanelMakerImage = {
   loadImageFile,
   createTileBlob,

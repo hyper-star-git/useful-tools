@@ -1,12 +1,12 @@
 "use strict";
 
-//ブラウザだけで動作する最小構成のZIP生成処理。
+//ブラウザだけで動作する最小構成のZIP生成処理.
 class ZipWriter {
   constructor() {
     this.entries = [];
   }
 
-  //ZIPへ1ファイル追加する。PNGは再圧縮せず、そのまま格納する。
+  //ZIPへ1ファイル追加する.PNGは再圧縮せず、そのまま格納する.
   add(path, data) {
     this.entries.push({
       path,
@@ -14,7 +14,7 @@ class ZipWriter {
     });
   }
 
-  //ブラウザからダウンロードできるZIPのBlobを作る。
+  //ブラウザからダウンロードできるZIPのBlobを作る.
   toBlob() {
     const localParts = [];
     const centralParts = [];
@@ -73,7 +73,7 @@ class ZipWriter {
     const endRecord = new Uint8Array(22);
     const endView = new DataView(endRecord.buffer);
 
-    //ZIPの中央ディレクトリ終端レコードを書き込む。
+    //ZIPの中央ディレクトリ終端レコードを書き込む.
     endView.setUint32(0, 0x06054b50, true);
     endView.setUint16(4, 0, true);
     endView.setUint16(6, 0, true);
@@ -87,7 +87,7 @@ class ZipWriter {
   }
 }
 
-//ZIPに必要なCRC-32チェックサムを計算する。
+//ZIPに必要なCRC-32チェックサムを計算する.
 function crc32(bytes) {
   let crc = 0xffffffff;
 
@@ -102,5 +102,5 @@ function crc32(bytes) {
   return (crc ^ 0xffffffff) >>> 0;
 }
 
-//ZIP生成クラスを画像分割ツールへ公開する。
+//ZIP生成クラスを画像分割ツールへ公開する.
 window.PhotoPanelMakerZip = { ZipWriter };

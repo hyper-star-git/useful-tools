@@ -1,16 +1,16 @@
 "use strict";
 
-//フォトパネルのブロックIDを作る。
+//フォトパネルのブロックIDを作る.
 function buildBlockIdentifier(namespace, blockBase, index) {
   return `${namespace}:${blockBase}_${String(index).padStart(2, "0")}`;
 }
 
-//共通の名前空間と各画像のIDをつなげてZIPファイル名を作る。
+//共通の名前空間と各画像のIDをつなげてZIPファイル名を作る.
 function buildArchiveBaseName(imageEntries, commonSettings) {
   const parts = [...new Set(imageEntries.map((entry) => `${commonSettings.namespace}_${entry.settings.blockId}`))];
   let safeName = parts.join(" + ").replace(/[^a-z0-9._+ -]+/gi, "_").trim();
 
-  //大量の画像でもファイル名が長くなりすぎないようにする。
+  //大量の画像でもファイル名が長くなりすぎないようにする.
   if (safeName.length > 170) {
     safeName = `${safeName.slice(0, 145)}_and_${parts.length}_images`;
   }
@@ -18,12 +18,12 @@ function buildArchiveBaseName(imageEntries, commonSettings) {
   return `[photo panels] ${safeName}`;
 }
 
-//ZIPファイル名を作る。
+//ZIPファイル名を作る.
 function buildArchiveName(imageEntries, commonSettings) {
   return `${buildArchiveBaseName(imageEntries, commonSettings)}.zip`;
 }
 
-//全ブロックで共有するフォトパネル用モデルを定義する。
+//全ブロックで共有するフォトパネル用モデルを定義する.
 function buildPhotoPanelGeometry() {
   return {
     format_version: "1.21.0",
@@ -43,11 +43,10 @@ function buildPhotoPanelGeometry() {
             pivot: [0, 8, 0],
             cubes: [
               {
-                //北側の面に画像を表示する16×16×1のパネル。
                 origin: [-8, 0, -8],
                 size: [16, 16, 1],
                 uv: {
-                  north: {
+                  south: {
                     uv: [0, 0],
                     uv_size: [16, 16],
                     material_instance: "photo_panel"
@@ -62,7 +61,7 @@ function buildPhotoPanelGeometry() {
   };
 }
 
-//複数画像分のBP / RPファイルをまとめて組み立てる。
+//複数画像分のBP / RPファイルをまとめて組み立てる.
 async function buildAddonFiles(imageEntries, commonSettings) {
   const files = [];
   const textureData = {};
@@ -73,9 +72,9 @@ async function buildAddonFiles(imageEntries, commonSettings) {
   const bpFolder = "BP";
   const rpFolder = "RP";
 
-  //画像ごとの分割データを順番にZIP内へ追加する。
+  //画像ごとの分割データを順番にZIP内へ追加する.
   for (const entry of imageEntries) {
-    //名前空間とItem Catalogは全画像で共有し、IDや分割数は画像別設定を使う。
+    //名前空間とItem Catalogは全画像で共有し、IDや分割数は画像別設定を使う.
     const settings = { ...commonSettings, ...entry.settings };
     const namespace = commonSettings.namespace;
     const blockBase = `photo_panel_${settings.blockId}`;
@@ -83,7 +82,7 @@ async function buildAddonFiles(imageEntries, commonSettings) {
     const catalogTranslationKey = `itemGroup.${catalogIdentifier}.name`;
     const tiles = entry.tiles;
 
-    //Item Catalogは同じ翻訳キーのグループへまとめる。
+    //Item Catalogは同じ翻訳キーのグループへまとめる.
     if (!catalogGroups.has(catalogTranslationKey)) {
       catalogGroups.set(catalogTranslationKey, {
         icon: null,
@@ -93,7 +92,7 @@ async function buildAddonFiles(imageEntries, commonSettings) {
     }
     const catalogGroup = catalogGroups.get(catalogTranslationKey);
 
-    //分割された画像ごとにブロックJSONとPNGを生成する。
+    //分割された画像ごとにブロックJSONとPNGを生成する.
     for (const tile of tiles) {
       const indexText = String(tile.index).padStart(2, "0");
       const identifier = buildBlockIdentifier(namespace, blockBase, tile.index);
@@ -114,18 +113,13 @@ async function buildAddonFiles(imageEntries, commonSettings) {
                 category: "construction"
               },
               traits: {
-                //設置した面を記録してブロックの向きを切り替える。
                 "minecraft:placement_position": {
                   enabled_states: ["minecraft:block_face"]
                 }
               }
             },
             components: {
-              //当たり判定と選択範囲を絵画のような厚さ1にする。
-              "minecraft:collision_box": {
-                origin: [-8, 0, -8],
-                size: [16, 16, 1]
-              },
+              "minecraft:collision_box": false,
               "minecraft:selection_box": {
                 origin: [-8, 0, -8],
                 size: [16, 16, 1]
@@ -144,7 +138,6 @@ async function buildAddonFiles(imageEntries, commonSettings) {
               "minecraft:placement_filter": {
                 conditions: [
                   {
-                    //壁面の東西南北だけへ設置できるようにする。
                     allowed_faces: ["north", "south", "east", "west"]
                   }
                 ]
@@ -165,7 +158,6 @@ async function buildAddonFiles(imageEntries, commonSettings) {
             },
             permutations: [
               {
-                //北面設置時は提示された定義どおり180度回転する。
                 condition: "query.block_state('minecraft:block_face') == 'north'",
                 components: {
                   "minecraft:transformation": {
@@ -174,7 +166,6 @@ async function buildAddonFiles(imageEntries, commonSettings) {
                 }
               },
               {
-                //西面設置時は左へ90度回転する。
                 condition: "query.block_state('minecraft:block_face') == 'west'",
                 components: {
                   "minecraft:transformation": {
@@ -183,7 +174,6 @@ async function buildAddonFiles(imageEntries, commonSettings) {
                 }
               },
               {
-                //南面設置時は基準向きのままにする。
                 condition: "query.block_state('minecraft:block_face') == 'south'",
                 components: {
                   "minecraft:transformation": {
@@ -192,7 +182,6 @@ async function buildAddonFiles(imageEntries, commonSettings) {
                 }
               },
               {
-                //東面設置時は右へ90度回転する。
                 condition: "query.block_state('minecraft:block_face') == 'east'",
                 components: {
                   "minecraft:transformation": {
@@ -210,15 +199,15 @@ async function buildAddonFiles(imageEntries, commonSettings) {
         data: new Uint8Array(await textureBlob.arrayBuffer())
       });
 
-      //terrain_texture.jsonでテクスチャ名とPNGを関連付ける。
+      //terrain_texture.jsonでテクスチャ名とPNGを関連付ける.
       textureData[textureAlias] = {
         textures: texturePath.replace(/\.png$/i, "")
       };
 
-      //各ブロックの表示名を翻訳ファイルへ追加する。
+      //各ブロックの表示名を翻訳ファイルへ追加する.
       langLines.push(`tile.${identifier}.name=${common.escapeLangText(`${settings.blockName} ${indexText}`)}`);
 
-      //同じCatalogグループに画像のブロックをまとめる。
+      //同じCatalogグループに画像のブロックをまとめる.
       if (catalogGroup.icon === null) {
         catalogGroup.icon = identifier;
       }
@@ -226,13 +215,13 @@ async function buildAddonFiles(imageEntries, commonSettings) {
     }
   }
 
-  //すべてのフォトパネルで共有するモデルを1つだけ出力する。
+  //すべてのフォトパネルで共有するモデルを1つだけ出力する.
   files.push({
     path: `${rpFolder}/models/blocks/photo_panel.geo.json`,
     data: common.jsonBytes(buildPhotoPanelGeometry())
   });
 
-  //全画像分のテクスチャをterrain_texture.jsonへまとめる。
+  //全画像分のテクスチャをterrain_texture.jsonへまとめる.
   files.push({
     path: `${rpFolder}/textures/terrain_texture.json`,
     data: common.jsonBytes({
@@ -243,7 +232,7 @@ async function buildAddonFiles(imageEntries, commonSettings) {
     })
   });
 
-  //各Item Catalogグループを1つのファイルへまとめる。
+  //各Item Catalogグループを1つのファイルへまとめる.
   const groups = [...catalogGroups.entries()].map(([name, group]) => ({
     group_identifier: {
       icon: group.icon,
@@ -267,7 +256,7 @@ async function buildAddonFiles(imageEntries, commonSettings) {
     })
   });
 
-  //全画像のブロック名とCatalog名をja_JP.langへまとめる。
+  //全画像のブロック名とCatalog名をja_JP.langへまとめる.
   for (const [translationKey, group] of catalogGroups.entries()) {
     langLines.push(`${translationKey}=${common.escapeLangText(group.name)}`);
   }
@@ -280,7 +269,7 @@ async function buildAddonFiles(imageEntries, commonSettings) {
   return files;
 }
 
-//生成処理をツール画面から利用できるように公開する。
+//生成処理をツール画面から利用できるように公開する.
 window.PhotoPanelMakerGenerator = {
   buildAddonFiles,
   buildArchiveBaseName,
