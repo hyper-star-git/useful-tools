@@ -122,7 +122,7 @@ function createTileDataUrl(image, tile) {
 }
 
 //プレビュー関数を画像分割ツールへ公開する。
-window.ImageSplitterPreview = {
+window.PhotoPanelMakerPreview = {
   createTiles,
   drawPreview,
   renderTileList

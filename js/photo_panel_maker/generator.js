@@ -5,10 +5,22 @@ function buildBlockIdentifier(namespace, blockBase, index) {
   return `${namespace}:${blockBase}_${String(index).padStart(2, "0")}`;
 }
 
+//共通の名前空間と各画像のIDをつなげてZIPファイル名を作る。
+function buildArchiveBaseName(imageEntries, commonSettings) {
+  const parts = [...new Set(imageEntries.map((entry) => `${commonSettings.namespace}_${entry.settings.blockId}`))];
+  let safeName = parts.join(" + ").replace(/[^a-z0-9._+ -]+/gi, "_").trim();
+
+  //大量の画像でもファイル名が長くなりすぎないようにする。
+  if (safeName.length > 170) {
+    safeName = `${safeName.slice(0, 145)}_and_${parts.length}_images`;
+  }
+
+  return `[photo panels] ${safeName}`;
+}
+
 //ZIPファイル名を作る。
-function buildArchiveName(namespace, blockBase) {
-  const safeName = `${namespace}_${blockBase}`.replace(/[^a-z0-9._-]+/gi, "_");
-  return `${safeName}_photo_panels.zip`;
+function buildArchiveName(imageEntries, commonSettings) {
+  return `${buildArchiveBaseName(imageEntries, commonSettings)}.zip`;
 }
 
 //全ブロックで共有するフォトパネル用モデルを定義する。
@@ -31,11 +43,10 @@ function buildPhotoPanelGeometry() {
             pivot: [0, 8, 0],
             cubes: [
               {
-                //南側に16×16×1の薄いパネルを置く。
-                origin: [-8, 0, 7],
+                //北側の面に画像を表示する16×16×1のパネル。
+                origin: [-8, 0, -8],
                 size: [16, 16, 1],
                 uv: {
-                  //北面を表示面にして、東西南北の設置面に追従させる。
                   north: {
                     uv: [0, 0],
                     uv_size: [16, 16],
@@ -45,91 +56,82 @@ function buildPhotoPanelGeometry() {
               }
             ]
           }
-        ],
-        "item_display_transforms": {
-          "gui": {
-            "rotation": [30, 225, 0]
-          }
-        }
+        ]
       }
     ]
   };
 }
 
-//既存アドオンへ追加するBP / RPファイルだけを組み立てる。
-async function buildAddonFiles(settings) {
-  const rootFolder = "PhotoPanels";
-  const bpFolder = `${rootFolder}/BP`;
-  const rpFolder = `${rootFolder}/RP`;
+//複数画像分のBP / RPファイルをまとめて組み立てる。
+async function buildAddonFiles(imageEntries, commonSettings) {
   const files = [];
   const textureData = {};
   const langLines = [];
-  const state = window.ImageSplitterState;
   const common = window.ToolCommon;
-  const imageApi = window.ImageSplitterImage;
-  const namespace = settings.namespace;
-  const blockBase = `photo_panel_${settings.blockId}`;
-  const catalogIdentifier = `${namespace}:${settings.itemCatalogId}`;
+  const imageApi = window.PhotoPanelMakerImage;
+  const catalogGroups = new Map();
+  const bpFolder = "BP";
+  const rpFolder = "RP";
 
-  //各分割画像についてBPのブロック定義とRPのテクスチャを作る。
-  for (const tile of state.tiles) {
-    const indexText = String(tile.index).padStart(2, "0");
-    const identifier = buildBlockIdentifier(namespace, blockBase, tile.index);
-    const blockIdWithoutNamespace = `${blockBase}_${indexText}`;
-    const textureAlias = blockIdWithoutNamespace;
-    const texturePath = `textures/blocks/photo_panels/${textureAlias}.png`;
-    const textureBlob = await imageApi.createTileBlob(state.image, tile);
-    const blockFileName = `${blockIdWithoutNamespace}.json`;
+  //画像ごとの分割データを順番にZIP内へ追加する。
+  for (const entry of imageEntries) {
+    //名前空間とItem Catalogは全画像で共有し、IDや分割数は画像別設定を使う。
+    const settings = { ...commonSettings, ...entry.settings };
+    const namespace = commonSettings.namespace;
+    const blockBase = `photo_panel_${settings.blockId}`;
+    const catalogIdentifier = `${namespace}:${commonSettings.itemCatalogId}`;
+    const catalogTranslationKey = `itemGroup.${catalogIdentifier}.name`;
+    const tiles = entry.tiles;
 
-    files.push({
-      path: `${bpFolder}/blocks/photo_panels/${blockFileName}`,
-      data: common.jsonBytes({
-        format_version: "1.21.80",
-        "minecraft:block": {
-          description: {
-            identifier,
-            menu_category: {
-              category: "construction"
-            },
-            traits: {
-              //設置した面を記録して東西南北の向きを切り替える。
-              "minecraft:placement_position": {
-                enabled_states: ["minecraft:block_face"]
-              }
-            }
-          },
-          components: {
-            //当たり判定と選択範囲も16×16×1にする。
-            "minecraft:collision_box": {
-              origin: [-8, 0, 7],
-              size: [16, 16, 1]
-            },
-            "minecraft:selection_box": {
-              origin: [-8, 0, 7],
-              size: [16, 16, 1]
-            },
-            "minecraft:geometry": "geometry.photo_panel",
-            "minecraft:material_instances": {
-              "*": {
-                texture: textureAlias,
-                render_method: "opaque"
+    //Item Catalogは同じ翻訳キーのグループへまとめる。
+    if (!catalogGroups.has(catalogTranslationKey)) {
+      catalogGroups.set(catalogTranslationKey, {
+        icon: null,
+        items: [],
+        name: commonSettings.itemCatalogName
+      });
+    }
+    const catalogGroup = catalogGroups.get(catalogTranslationKey);
+
+    //分割された画像ごとにブロックJSONとPNGを生成する。
+    for (const tile of tiles) {
+      const indexText = String(tile.index).padStart(2, "0");
+      const identifier = buildBlockIdentifier(namespace, blockBase, tile.index);
+      const blockIdWithoutNamespace = `${blockBase}_${indexText}`;
+      const textureAlias = blockIdWithoutNamespace;
+      const texturePath = `textures/blocks/photo_panels/${textureAlias}.png`;
+      const textureBlob = await imageApi.createTileBlob(entry.image, tile);
+      const blockFileName = `${blockIdWithoutNamespace}.json`;
+
+      files.push({
+        path: `${bpFolder}/blocks/photo_panels/${blockFileName}`,
+        data: common.jsonBytes({
+          format_version: "1.21.80",
+          "minecraft:block": {
+            description: {
+              identifier,
+              menu_category: {
+                category: "construction"
               },
-              photo_panel: {
-                texture: textureAlias,
-                render_method: "opaque"
+              traits: {
+                //設置した面を記録してブロックの向きを切り替える。
+                "minecraft:placement_position": {
+                  enabled_states: ["minecraft:block_face"]
+                }
               }
             },
-            "minecraft:placement_filter": {
-              conditions: [
-                {
-                  //壁面の東西南北だけへ設置できるようにする。
-                  allowed_faces: ["north", "south", "east", "west"]
-                }
-              ]
-            },
-            "minecraft:item_visual": {
-              geometry: "geometry.photo_panel",
-              material_instances: {
+            components: {
+              //当たり判定と選択範囲を絵画のような厚さ1にする。
+              "minecraft:collision_box": {
+                origin: [-8, 0, -8],
+                size: [16, 16, 1]
+              },
+              "minecraft:selection_box": {
+                origin: [-8, 0, -8],
+                size: [16, 16, 1]
+              },
+              "minecraft:geometry": "geometry.photo_panel",
+              "minecraft:material_instances": {
                 "*": {
                   texture: textureAlias,
                   render_method: "opaque"
@@ -138,63 +140,90 @@ async function buildAddonFiles(settings) {
                   texture: textureAlias,
                   render_method: "opaque"
                 }
-              }
-            }
-          },
-          permutations: [
-            {
-              //北面に設置したときは基準向きをそのまま使う。
-              condition: "query.block_state('minecraft:block_face') == 'north'",
-              components: {
-                "minecraft:transformation": {
-                  rotation: [0, 0, 0]
+              },
+              "minecraft:placement_filter": {
+                conditions: [
+                  {
+                    //壁面の東西南北だけへ設置できるようにする。
+                    allowed_faces: ["north", "south", "east", "west"]
+                  }
+                ]
+              },
+              "minecraft:item_visual": {
+                geometry: "geometry.photo_panel",
+                material_instances: {
+                  "*": {
+                    texture: textureAlias,
+                    render_method: "opaque"
+                  },
+                  photo_panel: {
+                    texture: textureAlias,
+                    render_method: "opaque"
+                  }
                 }
               }
             },
-            {
-              //南面に設置したときは180度回転する。
-              condition: "query.block_state('minecraft:block_face') == 'south'",
-              components: {
-                "minecraft:transformation": {
-                  rotation: [0, 180, 0]
+            permutations: [
+              {
+                //北面設置時は提示された定義どおり180度回転する。
+                condition: "query.block_state('minecraft:block_face') == 'north'",
+                components: {
+                  "minecraft:transformation": {
+                    rotation: [0, -180, 0]
+                  }
+                }
+              },
+              {
+                //西面設置時は左へ90度回転する。
+                condition: "query.block_state('minecraft:block_face') == 'west'",
+                components: {
+                  "minecraft:transformation": {
+                    rotation: [0, -90, 0]
+                  }
+                }
+              },
+              {
+                //南面設置時は基準向きのままにする。
+                condition: "query.block_state('minecraft:block_face') == 'south'",
+                components: {
+                  "minecraft:transformation": {
+                    rotation: [0, 0, 0]
+                  }
+                }
+              },
+              {
+                //東面設置時は右へ90度回転する。
+                condition: "query.block_state('minecraft:block_face') == 'east'",
+                components: {
+                  "minecraft:transformation": {
+                    rotation: [0, 90, 0]
+                  }
                 }
               }
-            },
-            {
-              //東面に設置したときは270度回転する。
-              condition: "query.block_state('minecraft:block_face') == 'east'",
-              components: {
-                "minecraft:transformation": {
-                  rotation: [0, 270, 0]
-                }
-              }
-            },
-            {
-              //西面に設置したときは90度回転する。
-              condition: "query.block_state('minecraft:block_face') == 'west'",
-              components: {
-                "minecraft:transformation": {
-                  rotation: [0, 90, 0]
-                }
-              }
-            }
-          ]
-        }
-      })
-    });
+            ]
+          }
+        })
+      });
 
-    files.push({
-      path: `${rpFolder}/${texturePath}`,
-      data: new Uint8Array(await textureBlob.arrayBuffer())
-    });
+      files.push({
+        path: `${rpFolder}/${texturePath}`,
+        data: new Uint8Array(await textureBlob.arrayBuffer())
+      });
 
-    //terrain_texture.jsonでテクスチャ名とPNGを関連付ける。
-    textureData[textureAlias] = {
-      textures: texturePath.replace(/\.png$/i, "")
-    };
+      //terrain_texture.jsonでテクスチャ名とPNGを関連付ける。
+      textureData[textureAlias] = {
+        textures: texturePath.replace(/\.png$/i, "")
+      };
 
-    //ja_JP.langで各ブロックの表示名を定義する。
-    langLines.push(`tile.${identifier}.name=${common.escapeLangText(`${settings.blockName} ${indexText}`)}`);
+      //各ブロックの表示名を翻訳ファイルへ追加する。
+      langLines.push(`tile.${identifier}.name=${common.escapeLangText(`${settings.blockName} ${indexText}`)}`);
+
+      //同じCatalogグループに画像のブロックをまとめる。
+      if (catalogGroup.icon === null) {
+        catalogGroup.icon = identifier;
+      }
+      catalogGroup.items.push(identifier);
+    }
   }
 
   //すべてのフォトパネルで共有するモデルを1つだけ出力する。
@@ -203,7 +232,7 @@ async function buildAddonFiles(settings) {
     data: common.jsonBytes(buildPhotoPanelGeometry())
   });
 
-  //terrain_texture.jsonでテクスチャ名とPNGを関連付ける。
+  //全画像分のテクスチャをterrain_texture.jsonへまとめる。
   files.push({
     path: `${rpFolder}/textures/terrain_texture.json`,
     data: common.jsonBytes({
@@ -214,7 +243,15 @@ async function buildAddonFiles(settings) {
     })
   });
 
-  //アイテムカタログ用のグループをBehavior Packへ出力する。
+  //各Item Catalogグループを1つのファイルへまとめる。
+  const groups = [...catalogGroups.entries()].map(([name, group]) => ({
+    group_identifier: {
+      icon: group.icon,
+      name
+    },
+    items: group.items
+  }));
+
   files.push({
     path: `${bpFolder}/item_catalog/crafting_item_catalog.json`,
     data: common.jsonBytes({
@@ -223,23 +260,18 @@ async function buildAddonFiles(settings) {
         categories: [
           {
             category_name: "construction",
-            groups: [
-              {
-                group_identifier: {
-                  icon: buildBlockIdentifier(namespace, blockBase, state.tiles[0].index),
-                  name: catalogIdentifier
-                },
-                items: state.tiles.map((tile) => buildBlockIdentifier(namespace, blockBase, tile.index))
-              }
-            ]
+            groups
           }
         ]
       }
     })
   });
 
-  //日本語のブロック表示名とアイテムカタログ名を定義する。
-  langLines.push(`${catalogIdentifier}=${common.escapeLangText(settings.itemCatalogName)}`);
+  //全画像のブロック名とCatalog名をja_JP.langへまとめる。
+  for (const [translationKey, group] of catalogGroups.entries()) {
+    langLines.push(`${translationKey}=${common.escapeLangText(group.name)}`);
+  }
+
   files.push({
     path: `${rpFolder}/texts/ja_JP.lang`,
     data: common.textBytes(`${langLines.join("\n")}\n`)
@@ -248,9 +280,11 @@ async function buildAddonFiles(settings) {
   return files;
 }
 
-//ファイル生成関数を画像分割ツールへ公開する。
-window.ImageSplitterGenerator = {
+//生成処理をツール画面から利用できるように公開する。
+window.PhotoPanelMakerGenerator = {
   buildAddonFiles,
+  buildArchiveBaseName,
   buildArchiveName,
-  buildBlockIdentifier
+  buildBlockIdentifier,
+  buildPhotoPanelGeometry
 };

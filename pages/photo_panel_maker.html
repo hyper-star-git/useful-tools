@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Minecraft フォトパネルメーカー</title>
+  <title>Minecraft フォトパネル生成ツール</title>
   <link rel="stylesheet" href="../css/common.css">
   <link rel="stylesheet" href="../css/photo_panel_maker/style.css">
 </head>
@@ -15,7 +15,7 @@
         <span class="tool-tag">Bedrock Edition</span>
         <span class="tool-tag">画像</span>
       </div>
-      <h1>Minecraft フォトパネルメーカー</h1>
+      <h1>Minecraft フォトパネル生成ツール</h1>
       <p>画像を分割して、薄いフォトパネルとして実装します。</p>
     </header>
 
@@ -25,16 +25,18 @@
       </div>
 
       <div id="dropZone" class="drop-zone" role="button" tabindex="0" aria-label="画像を登録">
-        <input id="imageInput" type="file" accept="image/*" hidden>
+        <input id="imageInput" type="file" accept="image/*" multiple hidden>
         <div class="drop-zone-content">
           <div class="drop-icon" aria-hidden="true">＋</div>
           <strong>画像をここにドロップ</strong>
-          <span>またはクリックして画像を選択</span>
+          <span>またはクリックして画像を選択（複数選択できます）</span>
           <small>PNG / JPEG / WebP / GIFなどのブラウザ対応画像</small>
         </div>
       </div>
 
-      <p id="imageStatus" class="image-status">未登録</p>
+      <div id="imageList" class="image-list hidden" aria-label="登録した画像一覧"></div>
+      <p id="imageStatus" class="image-status">画像が登録されていません。</p>
+      <div id="uploadValidationMessage" class="validation hidden"></div>
 
       <div id="imageInfo" class="image-info hidden">
         <div class="source-preview">
@@ -43,29 +45,17 @@
         <div class="image-details">
           <strong id="fileName"></strong>
           <span id="imageSize"></span>
-          <button id="removeImageButton" class="button secondary" type="button">画像を削除</button>
+          <button id="removeImageButton" class="button secondary" type="button">選択中の画像を削除</button>
         </div>
       </div>
     </section>
 
-    <section class="section settings-section">
+    <section class="section settings-section image-specific-settings-section">
       <div class="section-heading">
-        <h2>2. 設定</h2>
+        <h2>2. 画像別設定</h2>
       </div>
 
-      <div class="settings-groups">
-        <div class="settings-group settings-group-namespace">
-          <div class="settings-group-heading">
-            <h3>名前空間</h3>
-          </div>
-          <div class="settings-grid settings-grid-namespace">
-            <label class="field">
-              <input id="namespaceInput" type="text" value="photo" spellcheck="false" autocomplete="off">
-              <small>例：<code>photo</code></small>
-            </label>
-          </div>
-        </div>
-
+      <div class="settings-groups image-settings-groups">
         <div class="settings-group">
           <div class="settings-group-heading">
             <h3>ブロック設定</h3>
@@ -75,34 +65,15 @@
               <span>ID</span>
               <div class="id-input">
                 <span class="id-prefix">photo_panel_</span>
-                <input id="blockIdInput" type="text" value="picture" spellcheck="false" autocomplete="off">
+                <input id="blockIdInput" type="text" value="" spellcheck="false" autocomplete="off">
               </div>
-              <small>IDは <code>photo_panel_</code> が先頭へ付きます。</small>
+              <small>生成時に<code>photo_panel_</code>が先頭へ付きます。</small>
             </label>
 
             <label class="field">
-              <span>ブロック名</span>
-              <input id="blockNameInput" type="text" value="写真パネル" spellcheck="false" autocomplete="off">
-              <small><code>ja_JP.lang</code> に表示名として使用します。</small>
-            </label>
-          </div>
-        </div>
-
-        <div class="settings-group">
-          <div class="settings-group-heading">
-            <h3>Item Catalog</h3>
-          </div>
-          <div class="settings-grid settings-grid-catalog">
-            <label class="field">
-              <span>ID</span>
-              <input id="itemCatalogIdInput" type="text" value="photo_panels" spellcheck="false" autocomplete="off">
-              <small>Item CatalogのグループIDに使用します。</small>
-            </label>
-
-            <label class="field">
-              <span>Item Catalog名</span>
-              <input id="itemCatalogNameInput" type="text" value="フォトパネル" spellcheck="false" autocomplete="off">
-              <small><code>ja_JP.lang</code> にグループ名として使用します。</small>
+              <span>ブロックの名前</span>
+              <input id="blockNameInput" type="text" value="" spellcheck="false" autocomplete="off">
+              <small><code>ja_JP.lang</code>に表示名として使用します。</small>
             </label>
           </div>
         </div>
@@ -113,12 +84,12 @@
           </div>
           <div class="settings-grid settings-grid-split">
             <label class="field small-field">
-              <span>縦</span>
+              <span>縦の分割数</span>
               <input id="rowsInput" type="number" min="1" max="32" value="2" inputmode="numeric">
             </label>
 
             <label class="field small-field">
-              <span>横</span>
+              <span>横の分割数</span>
               <input id="columnsInput" type="number" min="1" max="32" value="2" inputmode="numeric">
             </label>
           </div>
@@ -126,12 +97,53 @@
       </div>
 
       <div id="ratioWarning" class="notice hidden"></div>
+      <div id="imageValidationMessage" class="validation hidden"></div>
+    </section>
+
+    <section class="section settings-section common-settings-section">
+      <div class="section-heading">
+        <h2>3. 共通設定</h2>
+      </div>
+
+      <div class="settings-groups common-settings-groups">
+        <div class="settings-group settings-group-namespace">
+          <div class="settings-group-heading">
+            <h3>名前空間</h3>
+          </div>
+          <div class="settings-grid settings-grid-namespace">
+            <label class="field">
+              <span>名前空間</span>
+              <input id="namespaceInput" type="text" value="" spellcheck="false" autocomplete="off">
+              <small>例：<code>photo</code></small>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-group-heading">
+            <h3>Item Catalog</h3>
+          </div>
+          <div class="settings-grid settings-grid-catalog">
+            <label class="field">
+              <span>Item Catalog ID</span>
+              <input id="itemCatalogIdInput" type="text" value="photo_panels" spellcheck="false" autocomplete="off">
+              <small>Item CatalogのグループIDに使用します。</small>
+            </label>
+
+            <label class="field">
+              <span>Item Catalogの名前</span>
+              <input id="itemCatalogNameInput" type="text" value="フォトパネル" spellcheck="false" autocomplete="off">
+              <small><code>ja_JP.lang</code>にグループ名として使用します。</small>
+            </label>
+          </div>
+        </div>
+      </div>
       <div id="validationMessage" class="validation hidden"></div>
     </section>
 
     <section class="section preview-section">
       <div class="section-heading">
-        <h2>3. プレビュー</h2>
+        <h2>4. プレビュー</h2>
       </div>
 
       <div class="preview-wrap">
@@ -146,20 +158,20 @@
 
     <section class="section output-section">
       <div class="section-heading">
-        <h2>4. ファイルを出力</h2>
+        <h2>5. ファイルを出力</h2>
       </div>
 
-      <p class="output-description">既存アドオンに追加するためのBP / RPファイルだけを生成します。</p>
-
-      <div class="output-count">
-        <span>ブロック数:</span>
-        <strong id="blockCount">0</strong>
+      <div class="output-summary">
+        <h3>生成されるフォトパネル</h3>
+        <div id="outputSummary" class="output-summary-list">
+          <p class="summary-empty">画像を登録すると、生成されるフォトパネルの一覧がここに表示されます。</p>
+        </div>
       </div>
 
       <button id="downloadButton" class="button primary download-button" type="button" disabled>
         ZIPでダウンロード
       </button>
-      <p id="downloadMessage" class="download-message">画像を登録するとZIPを生成できます。</p>
+      <p id="downloadMessage" class="download-message">画像を登録すると生成内容が表示されます。</p>
     </section>
 
     <footer class="footer">

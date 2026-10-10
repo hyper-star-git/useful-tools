@@ -1,7 +1,13 @@
 "use strict";
 
-//画像分割ツールで共有する状態をまとめる。
-window.ImageSplitterState = {
-  image: null,
-  tiles: []
+//複数画像と、画像共通・画像別の設定をまとめて管理する。
+window.PhotoPanelMakerState = {
+  images: [],
+  activeImageId: null,
+  nextImageId: 1,
+  commonSettings: {
+    namespace: "",
+    itemCatalogId: "photo_panels",
+    itemCatalogName: "フォトパネル"
+  }
 };

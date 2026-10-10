@@ -103,4 +103,4 @@ function crc32(bytes) {
 }
 
 //ZIP生成クラスを画像分割ツールへ公開する。
-window.ImageSplitterZip = { ZipWriter };
+window.PhotoPanelMakerZip = { ZipWriter };

@@ -125,13 +125,33 @@
   margin-top: 6px;
 }
 
-/*設定グループ。各まとまりを個別の枠で見やすく分ける。*/
+/*画像別設定と共通設定を、見た目と配置で区別する。*/
+.image-specific-settings-section {
+  border-top: 3px solid #6e9eaf;
+  background: linear-gradient(180deg, #f8fcfd 0%, rgba(255, 255, 255, 0.96) 150px);
+}
+
+.common-settings-section {
+  border-top: 3px solid #8e98a3;
+  background: linear-gradient(180deg, #fafbfc 0%, rgba(255, 255, 255, 0.96) 150px);
+}
+
+
 .settings-groups {
   display: grid;
   gap: 12px;
 }
 
+.image-settings-groups {
+  grid-template-columns: minmax(0, 1.55fr) minmax(250px, 0.8fr);
+}
+
+.common-settings-groups {
+  grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.6fr);
+}
+
 .settings-group {
+  min-width: 0;
   padding: 16px;
   border: 1px solid #d7dce1;
   border-radius: 12px;
@@ -160,7 +180,7 @@
 
 /*名前空間だけは入力欄をコンパクトにする。*/
 .settings-grid-namespace {
-  grid-template-columns: minmax(0, 420px);
+  grid-template-columns: minmax(0, 1fr);
 }
 
 /*各グループ内の入力配置。*/
@@ -169,16 +189,13 @@
   gap: 14px;
 }
 
-.settings-grid-block {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
+.settings-grid-block,
 .settings-grid-catalog {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .settings-grid-split {
-  grid-template-columns: repeat(2, minmax(0, 220px));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 /*IDの固定プレフィックス。*/
@@ -267,32 +284,6 @@
 }
 
 /*出力エリア。*/
-.output-description {
-  margin: -3px 0 12px;
-  color: #68717b;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.output-count {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  padding: 12px 14px;
-  border: 1px solid #d7dce1;
-  border-radius: 10px;
-  background: #f8f9fa;
-}
-
-.output-count span {
-  color: #68717b;
-  font-size: 13px;
-}
-
-.output-count strong {
-  font-size: 20px;
-}
-
 .download-button {
   width: 100%;
   margin-top: 16px;
@@ -313,8 +304,9 @@
 }
 
 @media (max-width: 900px) {
-  .settings-grid-block {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .image-settings-groups,
+  .common-settings-groups {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -344,5 +336,174 @@
   .settings-grid-catalog,
   .settings-grid-split {
     grid-template-columns: 1fr;
+  }
+}
+
+/*登録した画像を選択できるカード一覧。*/
+.image-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.image-card {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid #d7dce1;
+  border-radius: 11px;
+  background: #fff;
+  color: #27313a;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.image-card:hover {
+  border-color: #8d98a2;
+  background: #f8fafb;
+}
+
+.image-card.is-active {
+  border-color: #303a44;
+  background: #f0f3f5;
+  box-shadow: inset 0 0 0 1px #303a44;
+}
+
+.image-card:focus-visible {
+  outline: 2px solid #505c67;
+  outline-offset: 2px;
+}
+
+.image-card img {
+  flex: 0 0 58px;
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+  border: 1px solid #e0e5e9;
+  border-radius: 7px;
+  background: #f7f9fa;
+}
+
+.image-card-details {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+
+.image-card-details strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+/*生成される各フォトパネルをコンパクトな一覧で並べる。*/
+.output-summary {
+  padding: 12px;
+  border: 1px solid #d7dce1;
+  border-radius: 12px;
+  background: #f8f9fa;
+}
+
+.output-summary > h3 {
+  margin: 0 0 10px;
+  color: #39434c;
+  font-size: 15px;
+  font-weight: 750;
+}
+
+.output-summary-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 7px;
+}
+
+.output-summary-card {
+  display: flex;
+  min-width: 0;
+  min-height: 68px;
+  align-items: center;
+  gap: 8px;
+  padding: 7px;
+  border: 1px solid #d7dce1;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.output-summary-card.has-error {
+  border-color: #c45c5c;
+  background: #fffafa;
+}
+
+.output-summary-thumbnail {
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  border: 1px solid #e0e5e9;
+  border-radius: 6px;
+  background-color: #f7f9fa;
+  object-fit: contain;
+}
+
+.output-summary-meta {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.output-summary-name {
+  color: #303943;
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.output-summary-id {
+  display: block;
+  max-width: 100%;
+  padding: 3px 5px;
+  border-radius: 5px;
+  background: #f0f3f5;
+  color: #47535e;
+  font-size: 10px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.summary-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #7a838b;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+@media (max-width: 620px) {
+  .image-list {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-group {
+    padding: 13px;
+  }
+
+  .settings-grid-block,
+  .settings-grid-catalog,
+  .settings-grid-split {
+    grid-template-columns: 1fr;
+  }
+
+  .output-summary {
+    padding: 9px;
+  }
+
+  .output-summary-list {
+    grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
   }
 }

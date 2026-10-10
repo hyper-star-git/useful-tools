@@ -13,7 +13,6 @@ function loadImageFile(file) {
 
     image.onload = () => {
       URL.revokeObjectURL(url);
-      window.ImageSplitterState.image = image;
       resolve(image);
     };
 
@@ -69,7 +68,7 @@ function createObjectUrl(file) {
 }
 
 //画像処理関数を画像分割ツールへ公開する。
-window.ImageSplitterImage = {
+window.PhotoPanelMakerImage = {
   loadImageFile,
   createTileBlob,
   createObjectUrl
