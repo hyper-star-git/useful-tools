@@ -128,11 +128,24 @@ async function buildAddonFiles(imageEntries, commonSettings) {
               "minecraft:material_instances": {
                 "*": {
                   texture: textureAlias,
-                  render_method: "opaque"
+                  render_method: "alpha_test"
                 },
                 photo_panel: {
                   texture: textureAlias,
-                  render_method: "opaque"
+                  render_method: "alpha_test"
+                }
+              },
+              "minecraft:item_visual": {
+                geometry: "geometry.photo_panel",
+                material_instances: {
+                  "*": {
+                    texture: textureAlias,
+                    render_method: "alpha_test"
+                  },
+                  photo_panel: {
+                    texture: textureAlias,
+                    render_method: "alpha_test"
+                  }
                 }
               },
               "minecraft:placement_filter": {
@@ -141,19 +154,6 @@ async function buildAddonFiles(imageEntries, commonSettings) {
                     allowed_faces: ["north", "south", "east", "west"]
                   }
                 ]
-              },
-              "minecraft:item_visual": {
-                geometry: "geometry.photo_panel",
-                material_instances: {
-                  "*": {
-                    texture: textureAlias,
-                    render_method: "opaque"
-                  },
-                  photo_panel: {
-                    texture: textureAlias,
-                    render_method: "opaque"
-                  }
-                }
               }
             },
             permutations: [
