@@ -1,0 +1,29 @@
+【フォトパネルメーカー】
+
+■出力パス
+```
+[photo panels] (IDなど)/ 
+└BP/
+　└blocks/
+　　└photo_panels/
+　　　└photo_panel_(名前空間を除いたid).json 
+　└item_catalog/
+　　└crafting_item_catalog.json
+└RP/
+　└models/
+　　└blocks/
+　　　└photo_panel.geo.json
+　└texts/
+　　└ja_JP.lang
+　└textures/
+　　└blocks/
+　　　└photo_panels/
+　　　　└photo_panel_(名前空間を除いたid).png
+　　└terrain_texture.json
+```
+
+■モデル
+`photo_panel.geo.json`に`geometry.photo_panel`を定義。
+
+16×16×1で、厚さ1マスの絵画のように置けるようにする。
+設置できる方向は東西南北。ブロックを設置した面で方向を変える。
