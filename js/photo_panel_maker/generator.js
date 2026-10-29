@@ -140,11 +140,15 @@ async function buildAddonFiles(imageEntries, commonSettings) {
                 material_instances: {
                   "*": {
                     texture: textureAlias,
-                    render_method: "alpha_test"
+                    render_method: "alpha_test",
+                    ambient_occlusion: false,
+                    face_dimming: false
                   },
                   photo_panel: {
                     texture: textureAlias,
-                    render_method: "alpha_test"
+                    render_method: "alpha_test",
+                    ambient_occlusion: false,
+                    face_dimming: false
                   }
                 }
               },
@@ -154,7 +158,8 @@ async function buildAddonFiles(imageEntries, commonSettings) {
                     allowed_faces: ["north", "south", "east", "west"]
                   }
                 ]
-              }
+              },
+              "minecraft:light_dampening": 0
             },
             permutations: [
               {
